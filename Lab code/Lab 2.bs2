@@ -1,0 +1,3 @@
+' What's a Microcontroller - PushbuttonControlledLed.bs2' Check pushbutton state 10 times per second and blink LED when pressed.'{$STAMP BS2}'{$PBASIC 2.5}
+DODEBUG ? IN3  IF (IN3 = 1) THEN    HIGH 14    PAUSE 50    LOW 14    PAUSE 50  ELSE    PAUSE 100  ENDIF 
+LOOP 

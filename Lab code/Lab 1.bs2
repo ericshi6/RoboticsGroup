@@ -1,0 +1,2 @@
+'What's a Microcontroller - LedOnOff.bs2'Turn an LED on and off.  Repeat 1 time per second indefinitely.'{$STAMP BS2}'{$PBASIC 2.5}
+DEBUG "The LED connected to P14 is blinking!"DO  HIGH 14  PAUSE 50  LOW 14  PAUSE 500LOOP

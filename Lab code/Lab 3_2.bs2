@@ -1,0 +1,30 @@
+'{$STAMP BS2}
+'{$PBASIC 2.5}
+
+PAUSE 1000
+DEBUG "Program Running"
+
+time VAR WORD
+prevTime VAR WORD
+
+DO
+	HIGH 7
+	PAUSE 10
+	RCTIME 7, 1, time
+	time = time */ 185
+	time = time + 500
+	PULSOUT 14, time
+	
+	IF(time > prevTime +2) THEN
+		HIGH 13
+		LOW 12
+	ELSEIF(time < prevTime - 2) THEN
+		HIGH 12
+		LOW 13
+	ELSE
+		LOW 12
+		LOW 13
+	ENDIF
+	prevTime = time
+
+LOOP

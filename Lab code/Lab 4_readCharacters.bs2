@@ -1,0 +1,99 @@
+' What's a Microcontroller - MicroMusicWithRtttl.bs2' Play Nokia RTTTL format ringtones using DATA.'{$STAMP BS2}'{$PBASIC 2.5}
+DEBUG "Program Running!"' -----[ I/O Definitions ]------------------------------------------------- 
+
+SpeakerPin 	PIN 	0 	' Piezospeaker connected to P9.' -----[ Variables ]-------------------------------------------------------counter	VAR     WORDchar		VAR     BYTEindex	VAR     WORD' General purpose counter.' Variable stores characters.' Index for pointing at data.
+
+
+noteLetter	VAR     BYTE	' Stores note character.
+noteFreq		VAR     WORD	' Stores note frequency.
+noteOctave	VAR     WORD	' Stores note octave.
+duration		VAR     WORD	' Stores note duration.
+tempo		VAR     WORD	' Stores tempo.
+default_d		VAR     BYTE	' Stores default duration.
+default_o		VAR     BYTE	' Stores default octave.
+default_b		VAR     WORD	' Stores default beats/min.
+
+
+' -----[ EEPROM Data ]-----------------------------------------------------
+  RTTTL_File     DATA 	"Reveille:d=4,o=7,b=140:8g6,8c,16e,16c,8g6,8e,",
+					"8c,16e,16c,8g6,8e,8c,16e,16c,8a6,8c,e,8c,8g6,",
+					"8c,16e,16c,8g6,8e,8c,16e,16c,8g6,8e,8c,16e,",
+					"16c,8g6,8e,c,p,8e,8e,8e,8e,g,8e,8c,8e,8c,8e,8c,",
+					"e,8c,8e,8e,8e,8e,8e,g,8e,8c,8e,8c,8g6,8g6,c."
+  Done           DATA 	",q,"
+  Notes          DATA 	"p",       "a",		"#",       "b",
+					"c",       "#",	"d",       "#",
+					"e",       "f",	"#",       "g",
+					"#"
+						
+  Octave8 	 	 DATA 	WORD 0,	   WORD 3520, WORD 3729, WORD 3951,
+						WORD 4186, WORD 4435, WORD 4699, WORD 4978,
+						WORD 5274, WORD 5588, WORD 5920, WORD 6272,
+						WORD 6645
+
+' -----[ Initialization ]--------------------------------------------------
+    
+counter = 0				' Initialize counter.
+
+GOSUB FindEquals			' Find first '=' in file.
+GOSUB ProcessDuration		' Get default duration.
+GOSUB FindEquals			' Find next '='.
+GOSUB ProcessOctave		' Get default octave.
+GOSUB FindEquals			' Find last '='.
+GOSUB GetTempo			' Get default tempo.
+
+' -----[ Program Code ]----------------------------------------------------
+
+DO UNTIL char = "q"			' Loop until 'q' in DATA.
+  GOSUB ProcessDuration		' Get note duration.
+  GOSUB ProcessNote			' Get index value of note.
+  GOSUB CheckForDot			' If dot, 3/2 duration.
+  GOSUB ProcessOctave		' Get octave.
+  GOSUB PlayNote			' Get freq, play note, next.
+LOOP 						' End of main loop.
+
+END							' End of program.		
+			
+' -----[ Subroutine - Find Equals Character ]-----------------------------
+
+FindEquals:
+  	DO
+    		READ RTTTL_File + counter, char
+    		counter = counter + 1
+  	LOOP UNTIL char = "="
+	RETURN
+
+' -----[ Subroutine - Read Tempo from RTTTL Header ]---------------------- 
+' Each keyboard character has a unique number called an ASCII value.
+' The characters 0, 1, 2,...9 have ASCII values of 48, 49, 50,...57.
+' You can always convert from the character representing a digit to
+' to its value by subtracting 48 from the variable storing the digit.
+' You can examine this by comparing DEBUG DEC 49 and DEBUG 49.
+
+GetTempo:
+  default_b = 0
+  DO
+    READ RTTTL_File + counter, char
+    IF char = ":" THEN
+    		default_b = default_b /10
+    		counter = counter + 1
+    		EXIT
+  	ENDIF
+    	default_b = default_b + char-48 *10
+    	counter = counter + 1
+    	default_b = default_b * 10
+  LOOP UNTIL char = ":"
+RETURN
+
+' -----[ Subroutine - ProcessOctave: Look up Octave ]------------------------------------
+READ RTTTL_File + counter, char
+SELECT char
+  CASE "5" TO "8"
+    noteOctave = char - "0"
+    counter = counter + 1
+  CASE ELSE
+    noteOctave = default_o
+ENDSELECT
+IF default_o = 0 THEN
+  default_o = noteOctave
+ENDIF
